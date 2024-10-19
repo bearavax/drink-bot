@@ -23,10 +23,13 @@ def slur_text(text):
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
+    check_hangovers.start()
+    check_blackouts.start()
 
 @bot.command()
 async def drink(ctx, choice: str):
     """Drink a choice and gain points."""
+    print(f"Command !drink invoked by {ctx.author} with choice {choice}")
     user = ctx.author
     if user in hangovers and hangovers[user] > datetime.now():
         await ctx.send(f"{user.mention}, you're still hungover!")
@@ -49,6 +52,7 @@ async def drink(ctx, choice: str):
 @bot.command()
 async def buy_round(ctx):
     """Buy a round for everyone."""
+    print(f"Command !buy round invoked by {ctx.author}")
     for member in ctx.guild.members:
         if not member.bot:
             points[member] = points.get(member, 0) + 1
@@ -57,18 +61,21 @@ async def buy_round(ctx):
 @bot.command()
 async def give(ctx, member: discord.Member, drink: str):
     """Give a drink to another member."""
+    print(f"Command !give invoked by {ctx.author} to give {drink} to {member}")
     points[member] = points.get(member, 0) + 1
     await ctx.send(f"{ctx.author.mention} gave {member.mention} a {drink}. {member.mention} now has {points[member]} points!")
 
 @bot.command()
 async def cheers(ctx):
     """Drink together, first to finish gets wagered points."""
+    print(f"Command !cheers invoked by {ctx.author}")
     await ctx.send("Cheers! First to finish gets the wagered points!")
     # Implement minigame logic here
 
 @bot.command()
 async def beer_me(ctx):
     """Get a beer or lose all your leaderboard points."""
+    print(f"Command !beer me invoked by {ctx.author}")
     user = ctx.author
     if random.random() < 0.5:
         points[user] = points.get(user, 0) + 1
@@ -76,6 +83,22 @@ async def beer_me(ctx):
     else:
         points[user] = 0
         await ctx.send(f"{user.mention} lost all their points!")
+
+@bot.command()
+async def leaderboard(ctx):
+    """Show the top 10 drink scores and the player's rank."""
+    sorted_points = sorted(points.items(), key=lambda item: item[1], reverse=True)
+    top_10 = sorted_points[:10]
+    leaderboard_message = "🏆 **Leaderboard** 🏆\n"
+    for rank, (user, score) in enumerate(top_10, start=1):
+        leaderboard_message += f"{rank}. {user.display_name}: {score} points\n"
+
+    user_rank = next((rank for rank, (user, _) in enumerate(sorted_points, start=1) if user == ctx.author), None)
+    total_players = len(sorted_points)
+    if user_rank:
+        leaderboard_message += f"\nYou are ranked {user_rank} out of {total_players} players."
+
+    await ctx.send(leaderboard_message)
 
 @tasks.loop(minutes=1)
 async def check_hangovers():
@@ -94,7 +117,4 @@ async def check_blackouts():
             await user.send("Your blackout is over!")
             await ctx.guild.unmute(user, reason="Blackout over")
 
-check_hangovers.start()
-check_blackouts.start()
-
-bot.run('YOUR_TOKEN_HERE')
+bot.run('')
