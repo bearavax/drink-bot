@@ -1,8 +1,25 @@
+import os
 import discord
 from discord.ext import commands, tasks
 import random
 import asyncio
 from datetime import datetime, timedelta
+from keep_alive import keep_alive
+
+bot = commands.Bot(command_prefix='!')
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')
+
+@bot.command()
+async def hello(ctx):
+    await ctx.send('Hello there!')
+
+keep_alive()
+bot.run(os.getenv("token"))
+
+bot = commands.Bot(command_prefix='!')
 
 description = '''A drinking game bot with various commands and effects.'''
 
@@ -117,4 +134,4 @@ async def check_blackouts():
             await user.send("Your blackout is over!")
             await ctx.guild.unmute(user, reason="Blackout over")
 
-bot.run('')
+bot.run('MTI5MTYyNzc4NDY4MjIxMzQxMQ.G2AJfm.Ts56IK5DJKyvwRUDrUXGtQaSNIPs63Vhhuvj5w')
