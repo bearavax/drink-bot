@@ -6,21 +6,6 @@ import asyncio
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
 
-bot = commands.Bot(command_prefix='!')
-
-@bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user.name}')
-
-@bot.command()
-async def hello(ctx):
-    await ctx.send('Hello there!')
-
-keep_alive()
-bot.run(os.getenv("token"))
-
-bot = commands.Bot(command_prefix='!')
-
 description = '''A drinking game bot with various commands and effects.'''
 
 intents = discord.Intents.default()
@@ -32,6 +17,13 @@ bot = commands.Bot(command_prefix='!', description=description, intents=intents)
 points = {}
 hangovers = {}
 blackouts = {}
+
+# Global check to ensure commands are only used in the #bar channel
+def is_bar_channel(ctx):
+    return ctx.channel.name == 'bar'
+
+# Add the global check to the bot
+bot.add_check(is_bar_channel)
 
 def slur_text(text):
     return ''.join(random.choice((str.upper, str.lower))(c) for c in text)
@@ -134,4 +126,4 @@ async def check_blackouts():
             await user.send("Your blackout is over!")
             await ctx.guild.unmute(user, reason="Blackout over")
 
-bot.run('MTI5MTYyNzc4NDY4MjIxMzQxMQ.G2AJfm.Ts56IK5DJKyvwRUDrUXGtQaSNIPs63Vhhuvj5w')
+bot.run(os.getenv("DISCORD_TOKEN"))
