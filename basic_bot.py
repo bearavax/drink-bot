@@ -50,22 +50,42 @@ async def drink(ctx, choice: str):
     points[user] = points.get(user, 0) + 1
     await ctx.send(f"{user.mention} drank {choice} and now has {points[user]} points!")
 
-    if random.random() < 0.12:
-        hangovers[user] = datetime.now() + timedelta(hours=6)
-        await ctx.send(f"{user.mention} is wasted and will have a hangover for 6 hours!")
-    elif random.random() < 0.06:
-        blackouts[user] = datetime.now() + timedelta(hours=6)
-        await ctx.send(f"{user.mention} blacked out and is muted for 6 hours!")
-        await ctx.guild.mute(user, reason="Blacked out from drinking")
+    # Calculate the chance of getting wasted
+    chance_of_wasted = min(points[user] / 12, 1.0)
+    if random.random() < chance_of_wasted:
+        hangovers[user] = datetime.now() + timedelta(hours=1)
+        await ctx.send(f"{user.mention}, you're wasted and have a hangover!")
+
+    # Add a 2-minute drinking wait
+    await ctx.send("gulp gulp")
+    await asyncio.sleep(120)  # 2 minutes
 
 @bot.command()
 async def buy_round(ctx):
     """Buy a round for everyone."""
     print(f"Command !buy round invoked by {ctx.author}")
-    for member in ctx.guild.members:
-        if not member.bot:
+    user = ctx.author
+    total_members = len([member for member in ctx.guild.members if not member.bot])
+    user_points = points.get(user, 0)
+
+    if user_points < total_members:
+        await ctx.send(f"{user.mention}, you don't have enough points to buy a round for everyone!")
+        return
+
+    points[user] = user_points - total_members
+    members = [member for member in ctx.guild.members if not member.bot]
+    random.shuffle(members)
+
+    recipients = []
+    for member in members:
+        if points[user] > 0:
             points[member] = points.get(member, 0) + 1
-    await ctx.send("A round for everyone! Everyone gains 1 point.")
+            points[user] -= 1
+            recipients.append(member.mention)
+        else:
+            break
+
+    await ctx.send(f"{user.mention} bought a round! Points were given to: {', '.join(recipients)}. {user.mention} now has {points[user]} points.")
 
 @bot.command()
 async def give(ctx, member: discord.Member, drink: str):
@@ -108,6 +128,20 @@ async def leaderboard(ctx):
         leaderboard_message += f"\nYou are ranked {user_rank} out of {total_players} players."
 
     await ctx.send(leaderboard_message)
+    
+@bot.command()
+async def jagerbomb(ctx):
+    """Temporarily remove hangover for 15 minutes."""
+    user = ctx.author
+    if user in hangovers and hangovers[user] > datetime.now():
+        original_hangover_end = hangovers[user]
+        hangovers[user] = datetime.now() + timedelta(minutes=15)
+        await ctx.send(f"{user.mention} took a jagerbomb! Hangover temporarily removed for 15 minutes.")
+        await asyncio.sleep(15 * 60)  # 15 minutes
+        hangovers[user] = original_hangover_end
+        await ctx.send(f"{user.mention}, your hangover is back!")
+    else:
+        await ctx.send(f"{user.mention}, woah slow down there!")
 
 @tasks.loop(minutes=1)
 async def check_hangovers():
