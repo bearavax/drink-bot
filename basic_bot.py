@@ -35,17 +35,30 @@ async def on_ready():
     check_hangovers.start()
     check_blackouts.start()
 
+from datetime import datetime, timedelta
+
+# Dictionary to track the last drink time for each user
+last_drink_time = {}
+
 @bot.command()
 async def drink(ctx, choice: str):
     """Drink a choice and gain points."""
     print(f"Command !drink invoked by {ctx.author} with choice {choice}")
     user = ctx.author
-    if user in hangovers and hangovers[user] > datetime.now():
+    now = datetime.now()
+
+    if user in hangovers and hangovers[user] > now:
         await ctx.send(f"{user.mention}, you're still hungover!")
         return
-    if user in blackouts and blackouts[user] > datetime.now():
+    if user in blackouts and blackouts[user] > now:
         await ctx.send(f"{user.mention}, you're still blacked out!")
         return
+    if user in last_drink_time and last_drink_time[user] > now - timedelta(minutes=2):
+        await ctx.send("gulp gulp")
+        return
+
+    # Update the last drink time
+    last_drink_time[user] = now
 
     points[user] = points.get(user, 0) + 1
     await ctx.send(f"{user.mention} drank {choice} and now has {points[user]} points!")
@@ -53,12 +66,8 @@ async def drink(ctx, choice: str):
     # Calculate the chance of getting wasted
     chance_of_wasted = min(points[user] / 12, 1.0)
     if random.random() < chance_of_wasted:
-        hangovers[user] = datetime.now() + timedelta(hours=1)
+        hangovers[user] = now + timedelta(hours=1)
         await ctx.send(f"{user.mention}, you're wasted and have a hangover!")
-
-    # Add a 2-minute drinking wait
-    await ctx.send("gulp gulp")
-    await asyncio.sleep(120)  # 2 minutes
 
 @bot.command()
 async def buy_round(ctx):
