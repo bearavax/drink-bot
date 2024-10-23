@@ -1,3 +1,4 @@
+import json
 import os
 import discord
 from discord.ext import commands, tasks
@@ -11,12 +12,51 @@ description = '''A drinking game bot with various commands and effects.'''
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-
 bot = commands.Bot(command_prefix='!', description=description, intents=intents)
 
 points = {}
 hangovers = {}
 blackouts = {}
+last_drink_time = {}
+
+# save points modules
+
+def save_points():
+    with open('points.json', 'w') as f:
+        json.dump(points, f)
+        
+def load_points():
+    global points
+    if os.path.exists('points.json'):
+        with open('points.json', 'r') as f:
+            points = json.load(f)
+    else:
+        points = {}
+        
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print('------')
+    load_points()
+    check_hangovers.start()
+    check_blackouts.start()
+    
+@tasks.loop(minutes=5)
+async def save_points_periodically():
+    save_points()
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print('------')
+    load_points()
+    check_hangovers.start()
+    check_blackouts.start()
+    save_points_periodically.start()
+    
+@bot.event
+async def on_disconnect():
+    save_points()
 
 # Global check to ensure commands are only used in the #bar channel
 def is_bar_channel(ctx):
@@ -34,11 +74,6 @@ async def on_ready():
     print('------')
     check_hangovers.start()
     check_blackouts.start()
-
-from datetime import datetime, timedelta
-
-# Dictionary to track the last drink time for each user
-last_drink_time = {}
 
 @bot.command()
 async def drink(ctx, choice: str):
