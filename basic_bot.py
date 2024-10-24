@@ -140,10 +140,20 @@ async def give(ctx, member: discord.Member, drink: str):
 
 @bot.command()
 async def cheers(ctx):
-    """Drink together, first to finish gets wagered points."""
+    """Drink together, first to type !drink (choice) gets 3 points."""
     print(f"Command !cheers invoked by {ctx.author}")
-    await ctx.send("Cheers! First to finish gets the wagered points!")
-    # Implement minigame logic here
+    await ctx.send("Cheers! First to drink gets 3 points!")
+
+    def check(message):
+        return message.content.startswith('!drink') and message.channel == ctx.channel
+
+    try:
+        message = await bot.wait_for('message', check=check, timeout=30.0)
+        user = message.author
+        points[user] = points.get(user, 0) + 3
+        await ctx.send(f"{user.mention} was the first to drink and gets 3 points! They now have {points[user]} points.")
+    except asyncio.TimeoutError:
+        await ctx.send("No one drank in time!")
 
 @bot.command()
 async def beer_me(ctx):
