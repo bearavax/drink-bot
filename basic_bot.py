@@ -99,7 +99,7 @@ async def drink(ctx, choice: str):
     await ctx.send(f"{user.mention} drank {choice} and now has {points[user]} points!")
 
     # Calculate the chance of getting wasted
-    chance_of_wasted = min(points[user] / 12, 1.0)
+    chance_of_wasted = min(0.1 + (points[user] / 10) * 0.9, 1.0)
     if random.random() < chance_of_wasted:
         hangovers[user] = now + timedelta(hours=1)
         await ctx.send(f"{user.mention}, you're wasted and have a hangover!")
