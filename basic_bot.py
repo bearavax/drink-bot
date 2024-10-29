@@ -216,8 +216,8 @@ async def jagerbomb(ctx):
         await ctx.send(f"{user.mention}, woah slow down there!")
         
 @bot.command()
-async def tolerance(ctx):
-    """Binge drinker?."""
+async def my_tolerance(ctx):
+    """Binge drinker?"""
     user = ctx.author
     user_tolerance = tolerance.get(user, 6)  # Default tolerance is 6
     await ctx.send(f"{user.mention}, your tolerance level is {user_tolerance} drinks.")
@@ -225,9 +225,10 @@ async def tolerance(ctx):
 @bot.command()
 async def commands(ctx):
     """Show all commands."""
-    help_message = "Here are the available commands:\n"
+    help_message = "What can I get you?\n"
     for command in bot.commands:
-        help_message += f"!{command.name}: {command.help}\n"
+        if command.name != 'help':
+            help_message += f"!{command.name}: {command.help}\n"
     await ctx.send(help_message)
 
 @tasks.loop(minutes=1)
