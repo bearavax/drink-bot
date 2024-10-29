@@ -214,6 +214,21 @@ async def jagerbomb(ctx):
         await ctx.send(f"{user.mention}, your hangover is back!")
     else:
         await ctx.send(f"{user.mention}, woah slow down there!")
+        
+@bot.command()
+async def tolerance(ctx):
+    """Binge drinker?."""
+    user = ctx.author
+    user_tolerance = tolerance.get(user, 6)  # Default tolerance is 6
+    await ctx.send(f"{user.mention}, your tolerance level is {user_tolerance} drinks.")
+    
+@bot.command()
+async def commands(ctx):
+    """Show all commands."""
+    help_message = "Here are the available commands:\n"
+    for command in bot.commands:
+        help_message += f"!{command.name}: {command.help}\n"
+    await ctx.send(help_message)
 
 @tasks.loop(minutes=1)
 async def check_hangovers():
@@ -231,20 +246,5 @@ async def check_blackouts():
             del blackouts[user]
             await user.send("Your blackout is over!")
             await ctx.guild.unmute(user, reason="Blackout over")
-            
-@bot.command()
-async def tolerance(ctx):
-    """Binge drinker?."""
-    user = ctx.author
-    user_tolerance = tolerance.get(user, 6)  # Default tolerance is 6
-    await ctx.send(f"{user.mention}, your tolerance level is {user_tolerance} drinks.")
-    
-@bot.command()
-async def help(ctx):
-    """Show all commands."""
-    help_message = "Here are the available commands:\n"
-    for command in bot.commands:
-        help_message += f"!{command.name}: {command.help}\n"
-    await ctx.send(help_message)
 
 bot.run(os.getenv("DISCORD_TOKEN"))
