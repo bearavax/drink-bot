@@ -175,7 +175,7 @@ async def cheers(ctx):
 
 @bot.command()
 async def beer_me(ctx):
-    """Get a beer or lose all your leaderboard points."""
+    """Get a beer or lose your rainy day fund (risky)."""
     print(f"Command !beer me invoked by {ctx.author}")
     user = ctx.author
     if random.random() < 0.5:
@@ -187,7 +187,7 @@ async def beer_me(ctx):
 
 @bot.command()
 async def leaderboard(ctx):
-    """Show the top 10 drink scores and the player's rank."""
+    """Top 10 drunks."""
     sorted_points = sorted(points.items(), key=lambda item: item[1], reverse=True)
     top_10 = sorted_points[:10]
     leaderboard_message = "🏆 **Leaderboard** 🏆\n"
@@ -203,7 +203,7 @@ async def leaderboard(ctx):
     
 @bot.command()
 async def jagerbomb(ctx):
-    """Temporarily remove hangover for 15 minutes."""
+    """Go crazy & crash out."""
     user = ctx.author
     if user in hangovers and hangovers[user] > datetime.now():
         original_hangover_end = hangovers[user]
@@ -231,5 +231,20 @@ async def check_blackouts():
             del blackouts[user]
             await user.send("Your blackout is over!")
             await ctx.guild.unmute(user, reason="Blackout over")
+            
+@bot.command()
+async def tolerance(ctx):
+    """Binge drinker?."""
+    user = ctx.author
+    user_tolerance = tolerance.get(user, 6)  # Default tolerance is 6
+    await ctx.send(f"{user.mention}, your tolerance level is {user_tolerance} drinks.")
+    
+@bot.command()
+async def help(ctx):
+    """Show all commands."""
+    help_message = "Here are the available commands:\n"
+    for command in bot.commands:
+        help_message += f"!{command.name}: {command.help}\n"
+    await ctx.send(help_message)
 
 bot.run(os.getenv("DISCORD_TOKEN"))
