@@ -18,45 +18,49 @@ points = {}
 hangovers = {}
 blackouts = {}
 last_drink_time = {}
+tolerance = {}
+drink_count = {}
 
 # save points modules
 
-def save_points():
-    with open('points.json', 'w') as f:
-        json.dump(points, f)
+def save_data():
+    data = {
+        'points': points,
+        'tolerance': tolerance,
+        'drink_count': drink_count
+    }
+    with open('data.json', 'w') as f:
+        json.dump(data, f)
         
-def load_points():
-    global points
-    if os.path.exists('points.json'):
-        with open('points.json', 'r') as f:
-            points = json.load(f)
+def load_data():
+    global points, tolerance, drink_count
+    if os.path.exists('data.json'):
+        with open('data.json', 'r') as f:
+            data = json.load(f)
+            points = data.get('points', {})
+            tolerance = data.get('tolerance', {})
+            drink_count = data.get('drink_count', {})
     else:
         points = {}
+        tolerance = {}
+        drink_count = {}
         
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
-    load_points()
+    load_data()
     check_hangovers.start()
     check_blackouts.start()
+    save_data_periodically.start()
     
 @tasks.loop(minutes=5)
-async def save_points_periodically():
-    save_points()
+async def save_data_periodically():
+    save_data()
 
 @bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('------')
-    load_points()
-    check_hangovers.start()
-    check_blackouts.start()
-    save_points_periodically.start()
-    
-@bot.event
 async def on_disconnect():
-    save_points()
+    save_data()
 
 # Global check to ensure commands are only used in the #bar channel
 def is_bar_channel(ctx):
@@ -95,14 +99,28 @@ async def drink(ctx, choice: str):
     # Update the last drink time
     last_drink_time[user] = now
 
-    points[user] = points.get(user, 0) + 1
-    await ctx.send(f"{user.mention} drank {choice} and now has {points[user]} points!")
+    # Initialize tolerance and drink count if not already set
+    if user not in tolerance:
+        tolerance[user] = 6
+    if user not in drink_count:
+        drink_count[user] = 0
 
-    # Calculate the chance of getting wasted
-    chance_of_wasted = min(0.1 + (points[user] / 10) * 0.9, 1.0)
-    if random.random() < chance_of_wasted:
+    # Increase drink count
+    drink_count[user] += 1
+
+    # Check if user becomes hungover
+    if drink_count[user] >= tolerance[user]:
         hangovers[user] = now + timedelta(hours=1)
         await ctx.send(f"{user.mention}, you're wasted and have a hangover!")
+        drink_count[user] = 0  # Reset drink count after hangover
+
+    # Increase tolerance for every 60 drinks
+    if drink_count[user] % 60 == 0:
+        tolerance[user] += 1
+        await ctx.send(f"{user.mention}, your tolerance has increased! It is now {tolerance[user]} drinks.")
+
+    points[user] = points.get(user, 0) + 1
+    await ctx.send(f"{user.mention} drank {choice} and now has {points[user]} points!")
 
 @bot.command()
 async def buy_round(ctx):
@@ -189,7 +207,7 @@ async def jagerbomb(ctx):
     user = ctx.author
     if user in hangovers and hangovers[user] > datetime.now():
         original_hangover_end = hangovers[user]
-        hangovers[user] = datetime.now() + timedelta(minutes=15)
+        del hangovers[user]  # Temporarily remove the hangover
         await ctx.send(f"{user.mention} took a jagerbomb! Hangover temporarily removed for 15 minutes.")
         await asyncio.sleep(15 * 60)  # 15 minutes
         hangovers[user] = original_hangover_end
