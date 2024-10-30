@@ -92,7 +92,7 @@ async def drink(ctx, choice: str):
     if user in blackouts and blackouts[user] > now:
         await ctx.send(f"{user.mention}, you're still blacked out!")
         return
-    if user in last_drink_time and last_drink_time[user] > now - timedelta(minutes=2):
+    if user in last_drink_time and last_drink_time[user] > now - timedelta(seconds=10):
         await ctx.send("gulp gulp")
         return
 
