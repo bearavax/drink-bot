@@ -247,5 +247,38 @@ async def check_blackouts():
             del blackouts[user]
             await user.send("Your blackout is over!")
             await ctx.guild.unmute(user, reason="Blackout over")
+            
+@bot.command()
+async def spin(ctx):
+    """Play the slot machine. Costs 1 point."""
+    user = ctx.author
+    user_points = points.get(user, 0)
+
+    if user_points < 1:
+        await ctx.send(f"{user.mention}, you don't have enough points to play the slot machine!")
+        return
+
+    # Deduct 1 point for playing
+    points[user] = user_points - 1
+
+    # Slot machine outcomes
+    outcomes = ["🍒", "🍋", "🍉", "🍇", "🍓", "🍊"]
+    result = [random.choice(outcomes) for _ in range(3)]
+
+    await ctx.send(f"{user.mention} spun the slot machine: {' '.join(result)}")
+
+    # Determine winnings
+    if result[0] == result[1] == result[2]:
+        winnings = 10
+        await ctx.send(f"Jackpot! {user.mention} won {winnings} points!")
+    elif result[0] == result[1] or result[1] == result[2] or result[0] == result[2]:
+        winnings = 5
+        await ctx.send(f"Nice! {user.mention} won {winnings} points!")
+    else:
+        winnings = 0
+        await ctx.send(f"Better luck next time, {user.mention}!")
+
+    # Add winnings to user's points
+    points[user] += winnings
 
 bot.run(os.getenv("DISCORD_TOKEN"))
