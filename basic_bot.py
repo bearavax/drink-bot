@@ -262,7 +262,7 @@ async def spin(ctx):
     points[user] = user_points - 1
 
     # Slot machine outcomes
-    outcomes = ["🍒", "🍋", "🍉", "🍇", "🍓", "🍊"]
+    outcomes = ["🐻‍❄️", "❄️", "🍺", "🍻", "🍹", "🍸"]
     result = [random.choice(outcomes) for _ in range(3)]
 
     await ctx.send(f"{user.mention} spun the slot machine: {' '.join(result)}")
